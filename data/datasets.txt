@@ -1,0 +1,2 @@
+https://www.kaggle.com/camnugent/sandp500?select=all_stocks_5yr.csv
+https://www.kaggle.com/rohanrao/nifty50-stock-market-data?select=BPCL.csv

@@ -120,3 +120,4 @@ def compute_summary(X):
     print("final x_oga = ",x_oga)
     print("final x_ons = ",x_ons)
     return(bh_reward, np.cumsum(oga_reward), np.cumsum(ons_reward))
+

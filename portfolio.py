@@ -62,7 +62,7 @@ def test_unit():
 
 #test_unit()
 
-
+###################################################################################
 
 #Title#
 ## Real data
@@ -80,7 +80,7 @@ nifty = data.NIFTY()
 #Title#
 #### Stocks Visualization
 #Code#
-plot.vis(nifty)
+plot.vis(nifty, "NIFTY")
 
 #Title#
 #### Compute & Plot
@@ -98,12 +98,12 @@ plot.plot_two_plots(bh_reward, oga_reward, ons_reward)
 # 
 # https://www.kaggle.com/camnugent/sandp500?select=all_stocks_5yr.csv
 #Code#
-sp = data.SP(20)
+sp = data.SP()
 
 #Title#
 #### Stocks Visualization
 #Code#
-plot.vis(sp)
+plot.vis(sp, "S&P")
 
 #Title#
 #### Compute & Plot

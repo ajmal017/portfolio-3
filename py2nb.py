@@ -18,7 +18,7 @@ def add_cell(nb, cell_str, cell_type):
         if cell_str[-2] == '\n': #remove trailing new lines
             cell_str = cell_str[:-2]
         if cell_type == TITLE:
-            cell_str = cell_str.replace('#', '##')
+            #cell_str = cell_str.replace('#', '##')
             cell = nbformat.v4.new_markdown_cell(cell_str)
             cell.metadata.heading_collapsed = True
         elif cell_type == MARKDOWN:

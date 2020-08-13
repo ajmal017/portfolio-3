@@ -22,7 +22,7 @@ def plot_two_plots(hind,oga,ons):
 
     plt.show()
 
-def vis(X):
+def vis(X, name):
     plt.plot(X.T)
-    plt.title(f"{X.shape[0]} stocks")
+    plt.title(f"{X.shape[0]} stocks from {name}")
     plt.show()
