@@ -2,10 +2,13 @@ import numpy as np
 import pandas as pd
 import random
 import glob, os
+import yfinance as yf
+import datetime
 
 random.seed(42)
 
 
+# test unit
 def test_data(T=100):
     s1 = [2**(i%2) for i in range(T)]
     s2 = s1[::-1]
@@ -13,53 +16,130 @@ def test_data(T=100):
     return(X)
 
 
-# clean dataframe to get only ever-presence companies
-# returns numpy array (companies x time)
-def clean_df(X, date="Date", sym="Symbol", close="Close", k=-1):
-    X = X.dropna(subset=[date, sym, close])
-    X_groups = X.groupby([date])
-    Xs = list(X_groups)
-    Xs = [x[1] for x in Xs] #[0] is the date, [1] is the dataframe
+def df_to_clean_dfs(
+        df, #dataframe
+        date="Date",
+        sym="Symbol",
+        k=-1
+                   ):
+    df = df.dropna()
+    df_groups = df.groupby([date])
+    dfs = list(df_groups)
+    dfs = [x[1] for x in dfs] #[0] is the date, [1] is the dataframe
 
     #use only companies that always exist
-    companies = set(Xs[0][sym].unique())
-    for i in Xs:
-        companies = set(i[sym]) & companies #symbol sets intersection
+    companies = set(dfs[0][sym].unique())
+    for i in dfs:
+        companies = set(i[sym]) & companies #sets intersection
+
     #take subset to make tractable
     if k != -1:
         companies = random.sample(companies, k = k)
 
-    X = X[X[sym].isin(companies)] #remove non-permanent companies
-    X_groups = X.groupby([date])
-    Xs = list(X_groups)
-    Xs = [x[1] for x in Xs]
+    df = df[df[sym].isin(companies)] #remove non-permanent companies
+    df_groups = df.groupby([date])
+    dfs = list(df_groups)
+    dfs = [x[1] for x in dfs]
 
-    #concat to big numpy array
-    Xs[0] = Xs[0].sort_values(by=sym)
-    X = Xs[0][close].to_numpy(copy=True)[:,None]
-    comps = Xs[0][sym].to_numpy()
-    for i in range(1,len(Xs)):
-        Xs[i] = Xs[i].sort_values(by=sym)
-        X = np.hstack((X,Xs[i][close].to_numpy(copy=True)[:,None]))
+    return dfs
+
+
+# concat dataframes to big numpy array
+# each row is a company
+def dfs_to_np(
+        dfs,
+        sym="Symbol"
+        ):
+    dfs[0] = dfs[0].sort_values(by=sym)
+    dfs[0].drop(sym, axis=1, inplace=True)
+    X = dfs[0].to_numpy(copy=True)
+    for i in range(1,len(dfs)):
+        dfs[i] = dfs[i].sort_values(by=sym)
+        dfs[i].drop(sym, axis=1, inplace=True)
+        X = np.hstack((X,dfs[i].to_numpy(copy=True)))
 
     return(X)
 
 
-def NIFTY(k=-1, T=-1):
-    #X = pd.concat(map(pd.read_csv, glob.glob(os.path.join("data", "NIFTY", "*.csv"))))
-    X = pd.read_csv(os.path.join("data", "NIFTY", "NIFTY.csv"))
-    X = clean_df(X, "Date", "Symbol", "Close", k)
-    if T != -1:
-        return(X[:,:T])
-    else:
-        return(X)
+# clean dataframe to get only ever-presence companies
+# returns numpy array (companies x time)
+def df_to_clean_np(df, #dataframe
+                   date="Date", #df column for date
+                   sym="Symbol", #df column for company symbols
+                   k=-1 #subset of companies to take
+                  ):
+    tmp = df_to_clean_dfs(df,date,sym,k)
+    symbols = tmp[0][sym]
+    dfs = [df.drop(date, axis=1) for df in tmp]
+    X = dfs_to_np(dfs, sym)
+    return(X, symbols)
 
 
 def SP(k=-1, T=-1):
     X = pd.read_csv(os.path.join("data", "SP", "SP.csv"))
+    X = X[["date", "close", "Name"]]
     #X["date"] = X["date"].map(lambda x : x.split()[0]) #so no 00:00:00 in date
-    X = clean_df(X, "date", "Name", "close", k)
+    X, symbols = df_to_clean_np(X, "date", "Name", k)
     if T != -1:
-        return(X[:,:T])
+        return(X[:,:T], symbols)
     else:
-        return(X)
+        return(X, symbols)
+
+
+def find_last(name, path):
+    files_list = glob.glob(os.path.join(path, "*"))
+    good_files = [f for f in files_list if name in f]
+    last = max(good_files, key=os.path.getctime)
+    return(last)
+
+
+# download / load yahoo data
+def yahoo_data(
+        comps,
+        start,
+        end
+        ):
+
+    if not end:
+        today = datetime.date.today()
+        end = f"{today.year}-{today.month}-{today.day}"
+    name = '_'.join([start, end])
+
+    # find csvs from start
+    #if such file, load and concat with new data
+    try:
+        folder = os.path.join("data", "yahoo")
+        last_path = find_last(start, folder)
+        last_end = last_path.split('_')[-1] # remove path and start
+        last_end = last_end.split('.')[0] #remove ".csv"
+
+        prev = pd.read_csv(last_path)
+        if last_end == end: #the file we need already downloaded
+            return(prev)
+        else: #got partial history
+            last_end_datetime = datetime.datetime.strptime(last_end, "%Y-%m-%d")
+            new_start = str((last_end_datetime + datetime.timedelta(days=1)).date())
+            x = yf.download(comps, start=new_start, end=end)
+            X = pd.concat([prev, x])
+
+    except:
+        X = yf.download(comps, start=start, end=end)
+        X.to_csv(name + ".csv")
+
+    return(X)
+
+def yahoo(
+        comps, #space delimited symbols
+        start, #start date
+        end="" #end date
+        ):
+    X = yahoo_data(comps,start,end)
+
+    # change X to be like the SP data
+    X = X["Close"]
+    X = X.stack().reset_index()
+    X.columns = ["date", "symbol", "close"]
+    X["date"] = X["date"].apply(lambda x: str(x.date()))
+
+    X, symbols = df_to_clean_np(X, "date", "symbol")
+    return(X, symbols)

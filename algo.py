@@ -67,11 +67,11 @@ def hindsight(X):
 # online gradient ascent
 def oga(X):
     T = X.shape[1]
-    d = X.shape[0]
-    x = np.ones([d,1])/d
+    d = X.shape[0] #dimension
+    x = np.ones([d,1])/d #uniform probablity
     rewards = []
 
-    for t in tqdm(range(1,T), desc="ogd"):
+    for t in tqdm(range(1,T), desc="oga"):
         r_t = X[:,t] / X[:,t-1]
         r_t = r_t[:,None]
 
@@ -109,15 +109,3 @@ def ons(X, beta=2):
         rewards += [np.log(multiplier)[0][0]]
 
     return(x, rewards)
-
-
-# compute and summary on data
-def compute_summary(X):
-    bh_reward = hindsight(X)
-    x_oga, oga_reward = oga(X)
-    x_ons, ons_reward = ons(X)
-
-    print("final x_oga = ",x_oga)
-    print("final x_ons = ",x_ons)
-    return(bh_reward, np.cumsum(oga_reward), np.cumsum(ons_reward))
-

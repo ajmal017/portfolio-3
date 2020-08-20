@@ -1,6 +1,6 @@
 # Online Portfolio Selection
 
-I've implemented Online Gradient Ascent and Online Newton Step based on "Logarithmic Regret Algorithms for Online Convex Optimization" (in ```/pdf```).
+I've implemented Online Gradient Ascent and Online Newton Step based on "Logarithmic Regret Algorithms for Online Convex Optimization" (in ```/paper```).
 
 Tested on S&P 500 dataset:
 
@@ -27,6 +27,6 @@ Return is in log scale so while > 0: the algorithm makes money
 
 ## Notebook
 
-The notebook file is just for convenience for the reader.
+The notebook file is just for convenience of the reader.
 
 ```py2ng.py``` converts ```.py``` to ```.ipynb```.

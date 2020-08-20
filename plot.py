@@ -1,28 +1,32 @@
 from matplotlib import pyplot as plt
 
-def plot_two_plots(hind,oga,ons):
-    T = len(hind)
+def vis(X, name):
+    plt.plot(X.T)
+    plt.title(f"{X.shape[0]} stocks from {name}")
+    plt.show()
 
-    # stock multiplier
-    plt.subplot(121)
-    plt.plot(hind, color = 'b', label="best in hindsight")
-    plt.plot(oga, color = 'r', label="oga")
-    plt.plot(ons, color = 'c', label="ons")
+
+def plot_multiplier(algs):
+    # algs- list where algs[i] == [data(np array), name(string)]
+    T = len(algs[0][0]) #steps
+
+    for alg in algs:
+        plt.plot(alg[0], label=alg[1])
+
     plt.legend()
     plt.xlabel("time")
     plt.ylabel("log of stock multiplier")
+    plt.show()
 
-    # regret
-    plt.subplot(122)
-    plt.plot([(h - o) for h,o in zip(hind,oga)], color = 'r', label="oga")
-    plt.plot([(h - o) for h,o in zip(hind,ons)], color = 'c', label="ons")
+def plot_regret(hind, algs):
+    # hind==hindsight- np array
+    # algs as in plot_multiplier
+    T = len(hind)
+    for alg in algs:
+        plt.plot([(h - a) for h,a in zip(hind,alg[0])], label=alg[1])
+
     plt.legend()
     plt.xlabel("time")
     plt.ylabel("regret")
 
-    plt.show()
-
-def vis(X, name):
-    plt.plot(X.T)
-    plt.title(f"{X.shape[0]} stocks from {name}")
     plt.show()
