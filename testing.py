@@ -51,15 +51,15 @@ def test_unit(T=100):
     X = data.test_data(T)
 
     bh_reward = algo.hindsight(X)
-    x_oga, oga_reward = algo.oga(X)
-    x_ons, ons_reward = algo.ons(X)
+    x_oga, oga_rewards = algo.oga(X)
+    x_ons, ons_rewards = algo.ons(X)
 
     print("final x_oga = ",x_oga)
     print("final x_ons = ",x_ons)
     print("should be", 0.5 * np.ones([2,1]))
 
-    algs_reward = [[np.cumsum(oga_reward), "oga"],[np.cumsum(ons_reward), "ons"]]
-    plot.plot_regret(bh_reward,algs_reward)
+    algs_reward = [[np.cumsum(oga_rewards), "oga"],[np.cumsum(ons_rewards), "ons"]]
+    plot.plot_regret(bh_rewards,algs_rewards)
 
 #test_unit()
 
@@ -69,6 +69,8 @@ def test_unit(T=100):
 ## Real data
 
 
+
+###################################################################################
 #Title#
 ### S\&P 500
 
@@ -77,7 +79,7 @@ def test_unit(T=100):
 # 
 # https://www.kaggle.com/camnugent/sandp500?select=all_stocks_5yr.csv
 #Code#
-sp, comps = data.SP(k=20)
+sp, comps = data.SP(k=3)
 
 #Title#
 #### Stocks Visualization
@@ -87,11 +89,11 @@ plot.vis(sp, "S&P")
 #Title#
 #### Compute & Plot
 #Code#
-oga_x, oga_reward = algo.oga(sp)
+oga_x, oga_rewards = algo.oga(sp)
+ons_x, ons_rewards = algo.ons(sp)
 
-plot.plot_multiplier([[np.cumsum(oga_rewards), "oga"]])
+plot.plot_multiplier([[np.cumsum(oga_rewards), "oga"], [np.cumsum(ons_rewards), "ons"]])
 ###################################################################################
-
 #Title#
 ### Yahoo Finance
 
@@ -101,7 +103,10 @@ plot.plot_multiplier([[np.cumsum(oga_rewards), "oga"]])
 # 8/2/2013 - 7/2/2018
 #Code#
 comps = ' '.join(comps)
-y, comps = data.yahoo(comps, start="2013-02-08", end="2018-02-07")
+print(comps)
+y, _ = data.yahoo(comps, start="2013-02-08", end="2014-02-08")
+y, _ = data.yahoo(comps, start="2014-02-08", end="2018-02-07")
+
 
 #Title#
 #### Stocks Visualization
@@ -111,7 +116,7 @@ plot.vis(y, "Yahoo Finance")
 #Title#
 #### Compute & Plot
 #Code#
-oga_x, oga_reward = algo.oga(y)
+oga_x, oga_rewards = algo.oga(y)
+ons_x, ons_rewards = algo.ons(y)
 
-plot.plot_multiplier([[np.cumsum(oga_rewards), "oga"]])
-###################################################################################
+plot.plot_multiplier([[np.cumsum(oga_rewards), "oga"], [np.cumsum(ons_rewards), "ons"]])

@@ -86,8 +86,10 @@ def SP(k=-1, T=-1):
         return(X, symbols)
 
 
-def find_last(name, path):
+def find_last_file(name, path):
     files_list = glob.glob(os.path.join(path, "*"))
+    if not files_list: #empty folder
+        raise(Exception("No files"))
     good_files = [f for f in files_list if name in f]
     last = max(good_files, key=os.path.getctime)
     return(last)
@@ -109,23 +111,29 @@ def yahoo_data(
     #if such file, load and concat with new data
     try:
         folder = os.path.join("data", "yahoo")
-        last_path = find_last(start, folder)
+        last_path = find_last_file(start, folder)
         last_end = last_path.split('_')[-1] # remove path and start
-        last_end = last_end.split('.')[0] #remove ".csv"
 
-        prev = pd.read_csv(last_path)
+        prev = pd.read_pickle(last_path)
+
+        #check if same companies
+        prev_comps = set(prev["Close"].columns)
+        now_comps = set(comps.split(" "))
+        if now_comps != prev_comps: #not the same data
+            raise(Exception("Download new data"))
+
         if last_end == end: #the file we need already downloaded
             return(prev)
         else: #got partial history
             last_end_datetime = datetime.datetime.strptime(last_end, "%Y-%m-%d")
-            new_start = str((last_end_datetime + datetime.timedelta(days=1)).date())
+            new_start = str((last_end_datetime + datetime.timedelta(days=1)).date()) #last_end + one day
             x = yf.download(comps, start=new_start, end=end)
             X = pd.concat([prev, x])
 
     except:
         X = yf.download(comps, start=start, end=end)
-        X.to_csv(name + ".csv")
 
+    X.to_pickle(os.path.join(folder, name))
     return(X)
 
 def yahoo(
