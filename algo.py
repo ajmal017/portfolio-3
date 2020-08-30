@@ -65,10 +65,14 @@ def hindsight(X):
 
 
 # online gradient ascent
-def oga(X):
+def oga(X, #data
+        x = None #how to invest
+        ):
     T = X.shape[1]
     d = X.shape[0] #dimension
-    x = np.ones([d,1])/d #uniform probablity
+    if x is None:
+        x = np.ones([d,1])/d #how to invest
+
     rewards = []
 
     for t in tqdm(range(1,T), desc="oga"):
@@ -76,23 +80,31 @@ def oga(X):
         r_t = r_t[:,None]
 
         multiplier = r_t.T @ x
+        rewards += [np.log(multiplier)[0][0]]
+
         grad = r_t / multiplier
         eta = 1 / (d * np.sqrt(t))
         y = x + eta * grad #+ for ascent
         x = project_simplex(y)
 
-        rewards += [np.log(multiplier)[0][0]]
 
     return(x,rewards)
 
 
 # online newton step
-def ons(X, beta=2):
+def ons(X, #data
+        x = None, #how to invest
+        A = None,
+        b = None,
+        beta=2
+        ):
     T = X.shape[1]
-    d = X.shape[0]
-    x = np.ones([d,1])/d
-    A = np.zeros([d,d])
-    b = np.zeros([d,1])
+    if x is None:
+        d = X.shape[0]
+        x = np.ones([d,1])/d
+        A = np.zeros([d,d])
+        b = np.zeros([d,1])
+
     rewards = []
 
     for t in tqdm(range(1,T), desc="ons"):
@@ -100,12 +112,13 @@ def ons(X, beta=2):
         r_t = r_t[:,None]
 
         multiplier = r_t.T @ x
+        rewards += [np.log(multiplier)[0][0]]
+
         grad = r_t / multiplier
         hess = grad @ grad.T
         A += hess
         b += hess @ x + (1 / beta) * grad #+ for ascent
         x = project_A(A, np.linalg.pinv(A) @ b)
 
-        rewards += [np.log(multiplier)[0][0]]
 
-    return(x, rewards)
+    return((x, A, b), rewards)

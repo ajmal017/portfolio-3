@@ -87,15 +87,40 @@ def SP(k=-1, T=-1):
 
 
 def find_last_file(name, path):
+    '''can raise error if-
+        1.empty folder
+        2.no file that includes name in the file names
+    '''
     files_list = glob.glob(os.path.join(path, "*"))
-    if not files_list: #empty folder
-        raise(Exception("No files"))
+    #if not files_list: #empty folder
+    #    raise(Exception("No files"))
     good_files = [f for f in files_list if name in f]
     last = max(good_files, key=os.path.getctime)
     return(last)
 
+# save x
+def save_x(
+        x, #x the algorithm calculated
+        algo #algorithm used to make that x
+        ):
+    today = datetime.date.today()
+    today_str = f"{today.year}-{today.month}-{today.day}"
+    name = algo + "_" + today_str + ".npy"
+    file_path = os.path.join("data", "xs", name)
+    np.save(file_path, x)
 
-# download / load yahoo data
+
+# load x
+def load_last_x(
+        algo #algorithm used to make that x
+        ):
+    path = os.path.join("data", "xs")
+    last_x = find_last_file(algo, path)
+    date = (((last_x.split('_'))[-1]).split('.'))[0] #creation date
+    return(np.load(last_x, allow_pickle=True), date)
+
+
+# download yahoo data, load if possible
 def yahoo_data(
         comps,
         start,
@@ -107,14 +132,14 @@ def yahoo_data(
         end = f"{today.year}-{today.month}-{today.day}"
     name = '_'.join([start, end])
 
-    # find csvs from start
-    #if such file, load and concat with new data
+    # find pickles from start
+    #if such file exists, load and concat with new data
     try:
-        folder = os.path.join("data", "yahoo")
-        last_path = find_last_file(start, folder)
-        last_end = last_path.split('_')[-1] # remove path and start
+        path = os.path.join("data", "yahoo")
+        last_data = find_last_file(start, path)
+        last_end = last_data.split('_')[-1] # remove path and start
 
-        prev = pd.read_pickle(last_path)
+        prev = pd.read_pickle(last_data)
 
         #check if same companies
         prev_comps = set(prev["Close"].columns)
@@ -123,6 +148,7 @@ def yahoo_data(
             raise(Exception("Download new data"))
 
         if last_end == end: #the file we need already downloaded
+            print("yahoo data exists")
             return(prev)
         else: #got partial history
             last_end_datetime = datetime.datetime.strptime(last_end, "%Y-%m-%d")
@@ -133,7 +159,7 @@ def yahoo_data(
     except:
         X = yf.download(comps, start=start, end=end)
 
-    X.to_pickle(os.path.join(folder, name))
+    X.to_pickle(os.path.join(path, name))
     return(X)
 
 def yahoo(
@@ -146,6 +172,10 @@ def yahoo(
     # change X to be like the SP data
     X = X["Close"]
     X = X.stack().reset_index()
+    timestamp_tmp = {key:int(val) for key, val in zip(["year","month", "day"],start.split('-'))}
+    today = pd.Timestamp(**timestamp_tmp)
+    X = X[X["Date"] >= today]
+
     X.columns = ["date", "symbol", "close"]
     X["date"] = X["date"].apply(lambda x: str(x.date()))
 
