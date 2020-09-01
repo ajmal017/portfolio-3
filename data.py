@@ -110,10 +110,10 @@ def save_x(
 
 
 # load x
-def load_last_x(
+def load_last_yahoo_x(
         algo #algorithm used to make that x
         ):
-    path = os.path.join("data", "xs")
+    path = os.path.join("data","yahoo", "xs")
     try:
         last_x = find_last_file(algo, path)
     except:
@@ -191,7 +191,7 @@ def yahoo(
     X.columns = ["date", "symbol", "close"]
     X["date"] = X["date"].apply(lambda x: str(x.date()))
     if X.empty:
-        raise(RuntimeError("X is empty"))
+        raise(RuntimeError("data from yfinance is empty, aborting"))
 
     X, symbols = df_to_clean_np(X, "date", "symbol")
     return(X, symbols)

@@ -15,14 +15,14 @@ def play(
     logging.info(f"run_date-{data.today_str()}")
     try: 
         # oga
-        oga_x, date = data.load_last_x("oga_x")
+        oga_x, date = data.load_last_yahoo_x("oga_x")
         #if such x exists, change the starting date for computation
         if date is not None:
             start_date = date
         # ons
-        ons_x, _ = data.load_last_x("ons_x")
-        ons_A, _ = data.load_last_x("ons_A")
-        ons_b, _ = data.load_last_x("ons_b")
+        ons_x, _ = data.load_last_yahoo_x("ons_x")
+        ons_A, _ = data.load_last_yahoo_x("ons_A")
+        ons_b, _ = data.load_last_yahoo_x("ons_b")
 
         X, _ = data.yahoo(comps, start_date)
 
@@ -43,7 +43,6 @@ def play(
     except RuntimeError as e:
         # if data from yfinance is empty
         print(e)
-        print("data from yfinance is empty")
 
 
 if __name__ == "__main__":
