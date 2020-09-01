@@ -104,7 +104,9 @@ def save_x(
         algo #algorithm used to make that x
         ):
     today = datetime.date.today()
-    today_str = f"{today.year}-{today.month}-{today.day}"
+    day = to2str(str(today.day))
+    month = to2str(str(today.month))
+    today_str = f"{today.year}-{month}-{day}"
     name = algo + "_" + today_str + ".npy"
     file_path = os.path.join("data", "xs", name)
     np.save(file_path, x)
@@ -120,6 +122,9 @@ def load_last_x(
     return(np.load(last_x, allow_pickle=True), date)
 
 
+def to2str(s):
+    return '0' + s if len(s) == 1 else s
+
 # download yahoo data, load if possible
 def yahoo_data(
         comps,
@@ -129,7 +134,9 @@ def yahoo_data(
 
     if not end:
         today = datetime.date.today()
-        end = f"{today.year}-{today.month}-{today.day}"
+        day = to2str(str(today.day))
+        month = to2str(str(today.month))
+        end = f"{today.year}-{month}-{day}"
     name = '_'.join([start, end])
 
     # find pickles from start
@@ -178,6 +185,8 @@ def yahoo(
 
     X.columns = ["date", "symbol", "close"]
     X["date"] = X["date"].apply(lambda x: str(x.date()))
+    if X.empty:
+        raise(RuntimeError("X is empty"))
 
     X, symbols = df_to_clean_np(X, "date", "symbol")
     return(X, symbols)
