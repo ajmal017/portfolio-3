@@ -12,7 +12,6 @@ def play(
         ):
 
     logging.basicConfig(filename="multipliers.log",format="%(message)s", level=logging.INFO)
-    logging.info(f"run_date-{data.today_str()}")
     try: 
         # oga
         oga_x, date = data.load_last_yahoo_x("oga_x")
@@ -24,8 +23,9 @@ def play(
         ons_A, _ = data.load_last_yahoo_x("ons_A")
         ons_b, _ = data.load_last_yahoo_x("ons_b")
 
-        X, _ = data.yahoo(comps, start_date)
+        X, _ = data.yahoo(comps, start_date) #can throw
 
+        logging.info(f"run_date-{data.today_str()}")
         # oga
         next_oga_x, oga_rewards = algo.oga(X=X, x=oga_x)
         logging.info(f"oga-{np.exp(sum(oga_rewards))}")
