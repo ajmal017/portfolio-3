@@ -103,11 +103,8 @@ def save_x(
         x, #x the algorithm calculated
         algo #algorithm used to make that x
         ):
-    today = datetime.date.today()
-    day = to2str(str(today.day))
-    month = to2str(str(today.month))
-    today_str = f"{today.year}-{month}-{day}"
-    name = algo + "_" + today_str + ".npy"
+    today = today_str()
+    name = algo + "_" + today + ".npy"
     file_path = os.path.join("data", "xs", name)
     np.save(file_path, x)
 
@@ -117,13 +114,24 @@ def load_last_x(
         algo #algorithm used to make that x
         ):
     path = os.path.join("data", "xs")
-    last_x = find_last_file(algo, path)
+    try:
+        last_x = find_last_file(algo, path)
+    except:
+        #if no file, return None
+        return(None, None)
     date = (((last_x.split('_'))[-1]).split('.'))[0] #creation date
     return(np.load(last_x, allow_pickle=True), date)
 
 
 def to2str(s):
     return '0' + s if len(s) == 1 else s
+def today_str():
+    today = datetime.date.today()
+    day = to2str(str(today.day))
+    month = to2str(str(today.month))
+    today_str = f"{today.year}-{month}-{day}"
+    return(today_str)
+
 
 # download yahoo data, load if possible
 def yahoo_data(
@@ -133,10 +141,7 @@ def yahoo_data(
         ):
 
     if not end:
-        today = datetime.date.today()
-        day = to2str(str(today.day))
-        month = to2str(str(today.month))
-        end = f"{today.year}-{month}-{day}"
+        end = today_str()
     name = '_'.join([start, end])
 
     # find pickles from start
