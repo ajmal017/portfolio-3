@@ -1,51 +1,47 @@
 import numpy as np
 import pandas as pd
 import random
-import glob, os
+import os
 import yfinance as yf
 import datetime
+import utils
 
 random.seed(42)
 
 
-# test unit
-def test_data(T=100):
-    s1 = [2**(i%2) for i in range(T)]
-    s2 = s1[::-1]
-    X = np.vstack((np.array(s1),np.array(s2)))
-    return(X)
-
-
 def df_to_clean_dfs(
         df, #dataframe
-        date="Date",
-        sym="Symbol",
+        date="Date", #date column name
+        sym="Symbol", #symbol column name
         k=-1
-                   ):
+        ):
+    def df_to_list(df):
+        df_groups = df.groupby([date])
+        dfs = list(df_groups)
+        dfs = [x[1] for x in dfs] #[0] is the date, [1] is the dataframe
+        return(dfs)
+
     df = df.dropna()
-    df_groups = df.groupby([date])
-    dfs = list(df_groups)
-    dfs = [x[1] for x in dfs] #[0] is the date, [1] is the dataframe
+    dfs = df_to_list(df)
 
     #use only companies that always exist
     companies = set(dfs[0][sym].unique())
     for i in dfs:
         companies = set(i[sym]) & companies #sets intersection
 
-    #take subset to make tractable
     if k != -1:
+        #take subset to make tractable
         companies = random.sample(companies, k = k)
 
     df = df[df[sym].isin(companies)] #remove non-permanent companies
-    df_groups = df.groupby([date])
-    dfs = list(df_groups)
-    dfs = [x[1] for x in dfs]
+    dfs = df_to_list(df)
 
-    return dfs
+    return(dfs)
 
 
 # concat dataframes to big numpy array
 # each row is a company
+# each column is a date
 def dfs_to_np(
         dfs,
         sym="Symbol"
@@ -75,7 +71,21 @@ def df_to_clean_np(df, #dataframe
     return(X, symbols)
 
 
-def SP(k=-1, T=-1):
+
+
+########################## test data
+def test_data(T=100):
+    s1 = [2**(i%2) for i in range(T)]
+    s2 = s1[::-1]
+    X = np.vstack((np.array(s1),np.array(s2)))
+    return(X)
+
+
+########################## SP
+def SP(
+        k=-1,
+        T=-1
+        ):
     X = pd.read_csv(os.path.join("data", "SP", "SP.csv"))
     X = X[["date", "close", "Name"]]
     #X["date"] = X["date"].map(lambda x : x.split()[0]) #so no 00:00:00 in date
@@ -86,112 +96,89 @@ def SP(k=-1, T=-1):
         return(X, symbols)
 
 
-def find_last_file(name, path):
-    '''can raise error if-
-        1.empty folder
-        2.no file that includes name in the file names
-    '''
-    files_list = glob.glob(os.path.join(path, "*"))
-    #if not files_list: #empty folder
-    #    raise(Exception("No files"))
-    good_files = [f for f in files_list if name in f]
-    last = max(good_files, key=os.path.getctime)
-    return(last)
-
-# save x
-def save_x(
-        x, #x the algorithm calculated
-        algo #algorithm used to make that x
-        ):
-    today = today_str()
-    name = algo + "_" + today + ".npy"
-    file_path = os.path.join("data", "xs", name)
-    np.save(file_path, x)
-
-
-# load x
-def load_last_yahoo_x(
-        algo #algorithm used to make that x
-        ):
-    path = os.path.join("data","yahoo", "xs")
-    try:
-        last_x = find_last_file(algo, path)
-    except:
-        #if no file, return None
-        return(None, None)
-    date = (((last_x.split('_'))[-1]).split('.'))[0] #creation date
-    return(np.load(last_x, allow_pickle=True), date)
-
-
-def to2str(s):
-    return '0' + s if len(s) == 1 else s
-def today_str():
-    today = datetime.date.today()
-    day = to2str(str(today.day))
-    month = to2str(str(today.month))
-    today_str = f"{today.year}-{month}-{day}"
-    return(today_str)
-
-
+########################## yahoo 
 # download yahoo data, load if possible
 def yahoo_data(
         comps,
         start,
         end
         ):
-
-    if not end:
-        end = today_str()
     name = '_'.join([start, end])
-
-    # find pickles from start
-    #if such file exists, load and concat with new data
+    path = os.path.join("data", "yahoo")
+    close = "Close"
     try:
-        path = os.path.join("data", "yahoo")
-        last_data = find_last_file(start, path)
-        last_end = last_data.split('_')[-1] # remove path and start
-
+        # see if data from start exists
+        last_data = utils.find_last_file(path, name) #can raise
         prev = pd.read_pickle(last_data)
 
         #check if same companies
-        prev_comps = set(prev["Close"].columns)
-        now_comps = set(comps.split(" "))
+        prev_comps = set(prev[close].columns)
+        now_comps = set(comps.split(' '))
         if now_comps != prev_comps: #not the same data
-            raise(Exception("Download new data"))
+            raise(ValueError("download new data"))
 
-        if last_end == end: #the file we need already downloaded
-            print("yahoo data exists")
-            return(prev)
-        else: #got partial history
-            last_end_datetime = datetime.datetime.strptime(last_end, "%Y-%m-%d")
-            new_start = str((last_end_datetime + datetime.timedelta(days=1)).date()) #last_end + one day
-            x = yf.download(comps, start=new_start, end=end)
-            X = pd.concat([prev, x])
+        return(prev[close])
 
-    except:
-        X = yf.download(comps, start=start, end=end)
+    except ValueError as e:
+        # just download
+        df = correct_download(comps, start=start, end=end)
+        if df.empty:
+            raise(RuntimeError("data from yfinance is empty"))
 
-    X.to_pickle(os.path.join(path, name))
-    return(X)
+        df.to_pickle(os.path.join(path, name))
+
+        return(df[close])
+
+
+def correct_download(
+        comps,
+        start, #string
+        end #string
+        ):
+    X = yf.download(comps, start=start, end=end)
+    start_pd = pd.Timestamp(start)
+    return(X[X.index >= start_pd])
+
 
 def yahoo(
         comps, #space delimited symbols
         start, #start date
         end="" #end date
         ):
-    X = yahoo_data(comps,start,end)
+    if not end:
+        end = utils.today_str()
 
-    # change X to be like the SP data
-    X = X["Close"]
-    X = X.stack().reset_index()
-    timestamp_tmp = {key:int(val) for key, val in zip(["year","month", "day"],start.split('-'))}
-    today = pd.Timestamp(**timestamp_tmp)
-    X = X[X["Date"] >= today]
+    try:
+        ydata = yahoo_data(comps, start, end)
+    except RuntimeError as e:
+        print(e)
+        raise(e)
 
-    X.columns = ["date", "symbol", "close"]
-    X["date"] = X["date"].apply(lambda x: str(x.date()))
-    if X.empty:
-        raise(RuntimeError("data from yfinance is empty, aborting"))
+    symbols = list(ydata.columns)
+    X = ydata.to_numpy().T
 
-    X, symbols = df_to_clean_np(X, "date", "symbol")
     return(X, symbols)
+
+
+###################### test unit
+class testUnit:
+    def __init__(self):
+        # test_data
+        print(f"test_data: {np.sum(test_data(2) == np.array([[1,2],[2,1]])) == 4}")
+        comps = "AAPL SPY MSFT"
+        start = "2000-01-01"
+        end = "2000-02-02"
+        end_o = utils.plus_day(end)
+        # yahoo_data
+        try:
+            yahoo_data(comps, start=start, end=start)
+            print(f"yahoo_data empty: False")
+        except RuntimeError as e:
+            print(f"yahoo_data empty: True")
+        a = yahoo_data(comps, start=start, end=end)
+        b = correct_download(comps, start=start, end=end)["Close"]
+        print(f"yahoo_data: {a.equals(b)}")
+
+        c = yahoo_data("AMZN AAPL", start=start, end=end)
+        print(f"yahoo_data comps: {not a.equals(c)}")
+
