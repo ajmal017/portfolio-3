@@ -1,9 +1,6 @@
 # Online Portfolio Selection
 
-I've implemented Online Gradient Ascent and Online Newton Step based on "Logarithmic Regret Algorithms for Online Convex Optimization" (in ```/paper```),
-
-
-
+Implementation of Online Gradient Ascent and Online Newton Step based on "Logarithmic Regret Algorithms for Online Convex Optimization" (in ```/paper```),
 
 ## Tests
 

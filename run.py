@@ -2,6 +2,7 @@
 import logging
 import data
 import algo
+import utils
 import numpy as np
 
 
@@ -15,7 +16,15 @@ def play(
         a = alg(data="yahoo")
         a_date = a.load_last_params()
         try:
-            date = a_date if a_date is not None else start_date
+            if a_date is not None:
+                if utils.plus_day(a_date) == utils.today_str():
+                    #not enough data, add yesterday's data
+                    date = utils.minus_day(a_date)
+                else:
+                    date = a_date
+            else:
+                date = start_date
+
             X, _ = data.yahoo(comps, start=date) #can raise
             rewards = a.run(X)
             logging.info(f"{a.name}_{date}:{np.exp(sum(rewards))}")

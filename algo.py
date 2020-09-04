@@ -161,7 +161,7 @@ class ons(algorithm):
 
     def algorithm(self,
             X, #numpy
-            beta = 2 #hyper param
+            beta = 2. #hyper param
             ):
         self
         T = X.shape[1]

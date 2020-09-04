@@ -34,6 +34,14 @@ def plus_day(
     day_after = str((day_time + datetime.timedelta(days=1)).date())
     return(day_after)
 
+def minus_day(
+        day #string
+        ):
+    day_time = datetime.datetime.strptime(day, "%Y-%m-%d")
+    day_after = str((day_time - datetime.timedelta(days=1)).date())
+    return(day_after)
+
+
 
 class testUnit:
     def __init__(self):
