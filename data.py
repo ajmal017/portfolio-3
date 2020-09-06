@@ -107,7 +107,7 @@ def yahoo_data(
     path = os.path.join("data", "yahoo")
     close = "Close"
     try:
-        # see if data from start exists
+        # see if data from start to end exists
         last_data = utils.find_last_file(path, name) #can raise
         prev = pd.read_pickle(last_data)
 
@@ -122,8 +122,8 @@ def yahoo_data(
     except ValueError as e:
         # just download
         df = correct_download(comps, start=start, end=end)
-        if df.empty:
-            raise(RuntimeError("data from yfinance is empty"))
+        if df.shape[0] < 2: #algorithms needs atleast yesterday's and today's data
+            raise(RuntimeError("not enough data from yfinance"))
 
         df.to_pickle(os.path.join(path, name))
 
