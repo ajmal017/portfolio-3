@@ -15,19 +15,11 @@ def play(
     for alg in algo.algs():
         a = alg(data="yahoo")
         a_date = a.load_last_params()
+        date = a_date if a_date is not None else start_date
         try:
-            if a_date is not None:
-                if utils.plus_day(a_date) == utils.today_str():
-                    #not enough data, add yesterday's data
-                    date = utils.minus_day(a_date)
-                else:
-                    date = a_date
-            else:
-                date = start_date
-
             X, _ = data.yahoo(comps, start=date) #can raise
             rewards = a.run(X)
-            logging.info(f"{a.name}_{date}:{np.exp(sum(rewards))}")
+            logging.info(f"{a.name}_{date}:{np.exp(sum(rewards))}_{X.shape[1]}-days")
 
         except RuntimeError as e:
             # if data from yfinance is empty

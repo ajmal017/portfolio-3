@@ -104,6 +104,7 @@ def yahoo_data(
         end
         ):
     name = '_'.join([start, end])
+    print(name)
     path = os.path.join("data", "yahoo")
     close = "Close"
     try:

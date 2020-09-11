@@ -88,6 +88,7 @@ class algorithm:
         self.params = {}
         for p_str, p_name in zip(self.params_strs, self.params_names()):
             try:
+                p_name += '_' #to distinguish between ons_b to ons_beta
                 f = utils.find_last_file(self.params_path, p_name) #can raise
                 self.date = (((f.split('_'))[-1]).split('.'))[0] #creation date
                 self.params[p_str] = np.load(f, allow_pickle=True)
