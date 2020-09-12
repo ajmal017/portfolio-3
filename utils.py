@@ -15,11 +15,14 @@ def find_last_file(
     return(last)
 
 
+def dates_str(l):
+    return('_'.join(l))
+
 def to2str(s):
     return '0' + s if len(s) == 1 else s
 
 
-def today_str():
+def today():
     today = datetime.date.today()
     day = to2str(str(today.day))
     month = to2str(str(today.month))

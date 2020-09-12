@@ -97,38 +97,64 @@ def SP(
 
 
 ########################## yahoo 
+# get old and new yahoo data dates
+def yahoo_dates(
+        default_start #start date if no old data
+        ):
+    path = os.path.join("data", "yahoo")
+    try:
+        #find last downloaded data
+        full_path = utils.find_last_file(path, '_') #can raise
+        old_dates = (full_path.split(os.sep)[-1]).split('_')
+
+        new_start = utils.plus_day(old_dates[1])
+
+    except:
+        #no old data
+        old_dates = []
+        new_start = default_start
+    
+    new_dates = [new_start, utils.today()]
+
+    return(old_dates, new_dates)
+
+
 # download yahoo data, load if possible
 def yahoo_data(
         comps,
         start,
         end
         ):
-    name = '_'.join([start, end])
-    print(name)
     path = os.path.join("data", "yahoo")
     close = "Close"
-    try:
-        # see if data from start to end exists
-        last_data = utils.find_last_file(path, name) #can raise
-        prev = pd.read_pickle(last_data)
-
-        #check if same companies
-        prev_comps = set(prev[close].columns)
-        now_comps = set(comps.split(' '))
-        if now_comps != prev_comps: #not the same data
-            raise(ValueError("download new data"))
-
-        return(prev[close])
-
-    except ValueError as e:
+#    try:
+#        name = '_'.join([start, end])
+#        # see if data from start to end exists
+#        last_data = utils.find_last_file(path, name) #can raise
+#        prev = pd.read_pickle(last_data)
+#
+#        #check if same companies
+#        prev_comps = set(prev[close].columns)
+#        now_comps = set(comps.split(' '))
+#        if now_comps != prev_comps: #not the same data
+#            raise(ValueError("download new data"))
+#
+#        return(prev[close])
+#
+#    except ValueError as e:
         # just download
-        df = correct_download(comps, start=start, end=end)
-        if df.shape[0] < 2: #algorithms needs atleast yesterday's and today's data
-            raise(RuntimeError("not enough data from yfinance"))
+    df = correct_download(comps, start=start, end=end)
+    if df.shape[0] < 2: #algorithms needs atleast 2 days data
+        raise(RuntimeError("not enough data from yfinance"))
 
-        df.to_pickle(os.path.join(path, name))
+    df_start = str(df.index[0].date())
+    df_end = str(df.index[-1].date())
+    real_dates = [df_start, df_end]
+    name = utils.dates_str(real_dates)
 
-        return(df[close])
+    df.to_pickle(os.path.join(path, name))
+
+    return(df[close], real_dates)
 
 
 def correct_download(
@@ -144,13 +170,10 @@ def correct_download(
 def yahoo(
         comps, #space delimited symbols
         start, #start date
-        end="" #end date
+        end #end date
         ):
-    if not end:
-        end = utils.today_str()
-
     try:
-        ydata = yahoo_data(comps, start, end)
+        ydata, real_dates = yahoo_data(comps, start, end)
     except RuntimeError as e:
         print(e)
         raise(e)
@@ -158,7 +181,7 @@ def yahoo(
     symbols = list(ydata.columns)
     X = ydata.to_numpy().T
 
-    return(X, symbols)
+    return(X, symbols, real_dates)
 
 
 ###################### test unit

@@ -71,43 +71,44 @@ def algs():
 
 class algorithm:
     def __init__(self,
-            data #data folder- string
+            data, #data folder- string
+            old_dates, #old param dates
+            new_dates #new param dates
             ):
         self.name = "algorithm"
         self.data = data
         self.params_path = os.path.join("data", data, "params")
+        self.old_dates = old_dates
+        self.new_dates = new_dates
+
         self.params_strs = []
-        self.date = None
-        self.today = utils.today_str()
 
     def params_names(self):
         return([self.name + '_' + p for p in self.params_strs])
 
-    def load_last_params(self):
+    def load_params(self):
         # load params to dictionary
         self.params = {}
         for p_str, p_name in zip(self.params_strs, self.params_names()):
             try:
-                p_name += '_' #to distinguish between ons_b to ons_beta
-                f = utils.find_last_file(self.params_path, p_name) #can raise
-                self.date = (((f.split('_'))[-1]).split('.'))[0] #creation date
-                self.params[p_str] = np.load(f, allow_pickle=True)
-            except ValueError as e:
+                name = p_name + f"_{self.old_dates}.npy"
+                full_path = os.path.join(self.params_path, name)
+                self.params[p_str] = np.load(full_path, allow_pickle=True)
+            except FileNotFoundError as e:
                 self.params = {}
                 self.date = None
                 print(f"{self.name}: no params")
                 break
 
-        return(self.date)
-
     def save_params(self):
         for p_str, p_name in zip(self.params_strs, self.params_names()):
-            full_path = os.path.join(self.params_path, p_name + '_' + self.today + ".npy")
+            full_path = os.path.join(self.params_path, p_name + '_' + self.new_dates + ".npy")
             np.save(full_path, self.params[p_str])
 
     def run(self,
             X #numpy
             ):
+        self.load_params()
         rewards = self.algorithm(X)
         self.save_params()
         return(rewards)
@@ -120,9 +121,11 @@ class algorithm:
 
 class oga(algorithm):
     def __init__(self,
-            data
+            data,
+            old_dates,
+            new_dates
             ):
-        super().__init__(data)
+        super().__init__(data, old_dates, new_dates)
         self.name = "oga"
         self.params_strs = ['x']
 
@@ -154,9 +157,11 @@ class oga(algorithm):
 
 class ons(algorithm):
     def __init__(self,
-            data
+            data,
+            old_dates,
+            new_dates
             ):
-        super().__init__(data)
+        super().__init__(data, old_dates, new_dates)
         self.name = "ons"
         self.params_strs = ['x', 'A', 'b', 'beta']
 

@@ -8,22 +8,26 @@ import numpy as np
 
 def play(
         comps, #companies for trade
-        start_date = "2010-01-01", #history for computation
+        default_start = "2010-01-01", #history for computation
         ):
 
-    logging.basicConfig(filename="multipliers.log",format="%(message)s", level=logging.INFO)
-    for alg in algo.algs():
-        a = alg(data="yahoo")
-        a_date = a.load_last_params()
-        date = a_date if a_date is not None else start_date
-        try:
-            X, _ = data.yahoo(comps, start=date) #can raise
-            rewards = a.run(X)
-            logging.info(f"{a.name}_{date}:{np.exp(sum(rewards))}_{X.shape[1]}-days")
+    try:
+        logging.basicConfig(filename="multipliers.log",format="%(message)s", level=logging.INFO)
 
-        except RuntimeError as e:
-            # if data from yfinance is empty
-            print("aborting")
+        old, new = data.yahoo_dates(default_start)
+        old_dates = utils.dates_str(old)
+
+        X, symbols, real_dates = data.yahoo(comps, start=new[0], end=new[1]) #can raise
+        new_dates = utils.dates_str(real_dates)
+
+        for alg in algo.algs():
+            a = alg(data="yahoo", old_dates=old_dates, new_dates=new_dates)
+            rewards = a.run(X)
+            logging.info(f"{a.name}:{new_dates}:{np.exp(sum(rewards))}:{X.shape[1]}-days")
+
+    except RuntimeError as e:
+        # if data from yfinance is empty
+        print("aborting")
 
 
 if __name__ == "__main__":
