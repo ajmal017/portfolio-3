@@ -107,7 +107,7 @@ def yahoo_dates(
         full_path = utils.find_last_file(path, '_') #can raise
         old_dates = (full_path.split(os.sep)[-1]).split('_')
 
-        new_start = utils.plus_day(old_dates[1])
+        new_start = old_dates[1]
 
     except:
         #no old data
@@ -125,30 +125,18 @@ def yahoo_data(
         start,
         end
         ):
+    data_raise = RuntimeError("not enough data from yfinance")
     path = os.path.join("data", "yahoo")
     close = "Close"
-#    try:
-#        name = '_'.join([start, end])
-#        # see if data from start to end exists
-#        last_data = utils.find_last_file(path, name) #can raise
-#        prev = pd.read_pickle(last_data)
-#
-#        #check if same companies
-#        prev_comps = set(prev[close].columns)
-#        now_comps = set(comps.split(' '))
-#        if now_comps != prev_comps: #not the same data
-#            raise(ValueError("download new data"))
-#
-#        return(prev[close])
-#
-#    except ValueError as e:
-        # just download
     df = correct_download(comps, start=start, end=end)
     if df.shape[0] < 2: #algorithms needs atleast 2 days data
-        raise(RuntimeError("not enough data from yfinance"))
+        raise(data_raise)
 
     df_start = str(df.index[0].date())
     df_end = str(df.index[-1].date())
+    if df_start == df_end: #algorithms needs atleast 2 days data
+        raise(data_raise)
+
     real_dates = [df_start, df_end]
     name = utils.dates_str(real_dates)
 
