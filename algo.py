@@ -1,4 +1,5 @@
 import cvxpy as cp
+import typing
 import numpy as np
 import os
 from tqdm import tqdm
@@ -6,7 +7,7 @@ import utils
 
 
 # project vector to the simplex
-def project_simplex(y):
+def project_simplex(y: np.ndarray) -> np.ndarray:
     p = cp.Variable(y.shape)
     objective = cp.Minimize(cp.sum_squares(p - y))
     constraints = [cp.sum(p) == 1, p >= 0]
@@ -47,7 +48,9 @@ def best_hindsight(Rs):
 
 
 # find best fixed distribution in hindsight
-def hindsight(X):
+def hindsight(
+        X: np.ndarray
+        ) -> list:
     T = X.shape[1]
     rewards = []
 
@@ -56,6 +59,7 @@ def hindsight(X):
         r_t = r_t[:,None]
 
         #hindsight
+        Rs: np.ndarray
         try:
             Rs = np.hstack((Rs,r_t))
         except:
@@ -66,14 +70,14 @@ def hindsight(X):
     return(rewards)
 
 
-def algs():
+def algs() -> list:
     return([oga, ons])
 
 class algorithm:
     def __init__(self,
-            data, #data folder- string
-            old_dates, #old param dates
-            new_dates #new param dates
+            data: str, #data folder
+            old_dates: str, #old param dates
+            new_dates: str #new param dates
             ):
         self.name = "algorithm"
         self.data = data
@@ -81,9 +85,9 @@ class algorithm:
         self.old_dates = old_dates
         self.new_dates = new_dates
 
-        self.params_strs = []
+        self.params_strs: list = []
 
-    def params_names(self):
+    def params_names(self) -> typing.List[str]:
         return([self.name + '_' + p for p in self.params_strs])
 
     def load_params(self):
@@ -106,32 +110,32 @@ class algorithm:
             np.save(full_path, self.params[p_str])
 
     def run(self,
-            X #numpy
-            ):
+            X: np.ndarray
+            ) -> list:
         self.load_params()
         rewards = self.algorithm(X)
         self.save_params()
         return(rewards)
 
     def algorithm(self,
-            X #numpy
-            ):
+            X: np.ndarray
+            ) -> list:
         return([])
 
 
 class oga(algorithm):
     def __init__(self,
-            data,
-            old_dates,
-            new_dates
+            data: str, #data folder
+            old_dates: str, #old param dates
+            new_dates: str #new param dates
             ):
         super().__init__(data, old_dates, new_dates)
         self.name = "oga"
         self.params_strs = ['x']
 
     def algorithm(self,
-            X #numpy
-            ):
+            X: np.ndarray
+            ) -> list:
         T = X.shape[1] #length
         d = X.shape[0] #dimension
         if not self.params: #no previous params
@@ -157,18 +161,18 @@ class oga(algorithm):
 
 class ons(algorithm):
     def __init__(self,
-            data,
-            old_dates,
-            new_dates
+            data: str, #data folder
+            old_dates: str, #old param dates
+            new_dates: str #new param dates
             ):
         super().__init__(data, old_dates, new_dates)
         self.name = "ons"
         self.params_strs = ['x', 'A', 'b', 'beta']
 
     def algorithm(self,
-            X, #numpy
-            beta = 2. #hyper param
-            ):
+            X: np.ndarray,
+            beta: float = 2.0
+            ) -> list:
         self
         T = X.shape[1]
         d = X.shape[0]
@@ -194,78 +198,3 @@ class ons(algorithm):
             self.params['x'] = project_A(self.params['A'], np.linalg.pinv(self.params['A']) @ self.params['b'])
 
         return(rewards)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def oga_algo(X, #data
-        ):
-    T = X.shape[1]
-    d = X.shape[0] #dimension
-    x = np.ones([d,1])/d #how to invest
-
-    rewards = []
-
-    for t in tqdm(range(1,T), desc="oga"):
-        r_t = X[:,t] / X[:,t-1]
-        r_t = r_t[:,None]
-
-        multiplier = r_t.T @ x
-        rewards += [np.log(multiplier)[0][0]]
-
-        grad = r_t / multiplier
-        eta = 1 / (d * np.sqrt(t))
-        y = x + eta * grad #+ for ascent
-        x = project_simplex(y)
-
-
-    return(x,rewards)
-
-
-# online newton step
-def ons_algo(X, #data
-        beta=2
-        ):
-    T = X.shape[1]
-    d = X.shape[0]
-    x = np.ones([d,1])/d
-    A = np.zeros([d,d])
-    b = np.zeros([d,1])
-
-    rewards = []
-
-    for t in tqdm(range(1,T), desc="ons"):
-        r_t = X[:,t] / X[:,t-1]
-        r_t = r_t[:,None]
-
-        multiplier = r_t.T @ x
-        rewards += [np.log(multiplier)[0][0]]
-
-        grad = r_t / multiplier
-        hess = grad @ grad.T
-        A += hess
-        b += hess @ x + (1 / beta) * grad #+ for ascent
-        x = project_A(A, np.linalg.pinv(A) @ b)
-
-
-    return((x, A, b), rewards)

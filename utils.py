@@ -2,9 +2,9 @@ import os, glob
 import datetime
 
 def find_last_file(
-        path, #folder path- string
-        name #name date- string
-        ):
+        path: str,
+        name: str
+        ) -> str:
     #can raise error if-
     #    1.empty folder
     #    2.no file that includes name in the file name
@@ -15,14 +15,14 @@ def find_last_file(
     return(last)
 
 
-def dates_str(l):
+def dates_str(l: list) -> str:
     return('_'.join(l))
 
-def to2str(s):
+def to2str(s: str) -> str:
     return '0' + s if len(s) == 1 else s
 
 
-def today():
+def today() -> str:
     today = datetime.date.today()
     day = to2str(str(today.day))
     month = to2str(str(today.month))
@@ -31,15 +31,15 @@ def today():
 
 
 def plus_day(
-        day #string
-        ):
+        day: str
+        ) -> str:
     day_time = datetime.datetime.strptime(day, "%Y-%m-%d")
     day_after = str((day_time + datetime.timedelta(days=1)).date())
     return(day_after)
 
 def minus_day(
-        day #string
-        ):
+        day: str
+        ) -> str:
     day_time = datetime.datetime.strptime(day, "%Y-%m-%d")
     day_after = str((day_time - datetime.timedelta(days=1)).date())
     return(day_after)

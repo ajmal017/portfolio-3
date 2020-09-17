@@ -1,4 +1,5 @@
 import numpy as np
+import typing
 import pandas as pd
 import random
 import os
@@ -8,13 +9,15 @@ import utils
 
 random.seed(42)
 
+DF_LIST = typing.List[pd.DataFrame]
+
 
 def df_to_clean_dfs(
-        df, #dataframe
-        date="Date", #date column name
-        sym="Symbol", #symbol column name
-        k=-1
-        ):
+        df: pd.DataFrame, #dataframe
+        date: str ="Date", #date column name
+        sym: str ="Symbol", #symbol column name
+        k: int =-1
+        ) -> DF_LIST:
     def df_to_list(df):
         df_groups = df.groupby([date])
         dfs = list(df_groups)
@@ -25,9 +28,9 @@ def df_to_clean_dfs(
     dfs = df_to_list(df)
 
     #use only companies that always exist
-    companies = set(dfs[0][sym].unique())
+    companies_set = set(dfs[0][sym].unique())
     for i in dfs:
-        companies = set(i[sym]) & companies #sets intersection
+        companies = list(set(i[sym]) & companies_set) #sets intersection
 
     if k != -1:
         #take subset to make tractable
@@ -43,9 +46,9 @@ def df_to_clean_dfs(
 # each row is a company
 # each column is a date
 def dfs_to_np(
-        dfs,
-        sym="Symbol"
-        ):
+        dfs: DF_LIST,
+        sym: str ="Symbol"
+        ) -> np.ndarray:
     dfs[0] = dfs[0].sort_values(by=sym)
     dfs[0].drop(sym, axis=1, inplace=True)
     X = dfs[0].to_numpy(copy=True)
@@ -56,14 +59,15 @@ def dfs_to_np(
 
     return(X)
 
+TUPLE = typing.Tuple[np.ndarray, list]
 
 # clean dataframe to get only ever-presence companies
 # returns numpy array (companies x time)
-def df_to_clean_np(df, #dataframe
-                   date="Date", #df column for date
-                   sym="Symbol", #df column for company symbols
-                   k=-1 #subset of companies to take
-                  ):
+def df_to_clean_np(df: pd.DataFrame,
+                   date: str ="Date", #df column for date
+                   sym: str ="Symbol", #df column for company symbols
+                   k: int =-1 #subset of companies to take
+                   ) -> TUPLE:
     tmp = df_to_clean_dfs(df,date,sym,k)
     symbols = tmp[0][sym]
     dfs = [df.drop(date, axis=1) for df in tmp]
@@ -74,7 +78,7 @@ def df_to_clean_np(df, #dataframe
 
 
 ########################## test data
-def test_data(T=100):
+def test_data(T: int=100) -> np.ndarray:
     s1 = [2**(i%2) for i in range(T)]
     s2 = s1[::-1]
     X = np.vstack((np.array(s1),np.array(s2)))
@@ -83,9 +87,9 @@ def test_data(T=100):
 
 ########################## SP
 def SP(
-        k=-1,
-        T=-1
-        ):
+        k: int =-1,
+        T: int =-1
+        ) -> TUPLE:
     X = pd.read_csv(os.path.join("data", "SP", "SP.csv"))
     X = X[["date", "close", "Name"]]
     #X["date"] = X["date"].map(lambda x : x.split()[0]) #so no 00:00:00 in date
@@ -99,8 +103,8 @@ def SP(
 ########################## yahoo 
 # get old and new yahoo data dates
 def yahoo_dates(
-        default_start #start date if no old data
-        ):
+        default_start: str #start date if no old data
+        ) -> typing.Tuple[typing.List[str], typing.List[str]]:
     path = os.path.join("data", "yahoo")
     try:
         #find last downloaded data
@@ -119,12 +123,13 @@ def yahoo_dates(
     return(old_dates, new_dates)
 
 
+DF_TUPLE = typing.Tuple[pd.DataFrame, typing.List[str]]
 # download yahoo data, load if possible
 def yahoo_data(
-        comps,
-        start,
-        end
-        ):
+        comps: str,
+        start: str,
+        end: str 
+        ) -> DF_TUPLE:
     data_raise = RuntimeError("not enough data from yfinance")
     path = os.path.join("data", "yahoo")
     close = "Close"
@@ -146,20 +151,20 @@ def yahoo_data(
 
 
 def correct_download(
-        comps,
-        start, #string
-        end #string
-        ):
+        comps: str,
+        start: str,
+        end: str
+        ) -> pd.DataFrame:
     X = yf.download(comps, start=start, end=end)
     start_pd = pd.Timestamp(start)
     return(X[X.index >= start_pd])
 
 
 def yahoo(
-        comps, #space delimited symbols
-        start, #start date
-        end #end date
-        ):
+        comps: str, #space delimited symbols
+        start: str, #start date
+        end: str #end date
+        ) -> typing.Tuple[np.ndarray, typing.List[str], typing.List[str]]:
     try:
         ydata, real_dates = yahoo_data(comps, start, end)
     except RuntimeError as e:
