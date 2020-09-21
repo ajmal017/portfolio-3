@@ -1,25 +1,24 @@
 import os, glob
 import datetime
 
-def find_last_file(
-        path: str,
-        name: str
-        ) -> str:
-    #can raise error if-
+
+def find_last_file(path: str, name: str) -> str:
+    # can raise error if-
     #    1.empty folder
     #    2.no file that includes name in the file name
 
     files_list = glob.glob(os.path.join(path, "*"))
     good_files = [f for f in files_list if name in f]
     last = max(good_files, key=os.path.getctime)
-    return(last)
+    return last
 
 
 def dates_str(l: list) -> str:
-    return('_'.join(l))
+    return "_".join(l)
+
 
 def to2str(s: str) -> str:
-    return '0' + s if len(s) == 1 else s
+    return "0" + s if len(s) == 1 else s
 
 
 def today() -> str:
@@ -27,27 +26,25 @@ def today() -> str:
     day = to2str(str(today.day))
     month = to2str(str(today.month))
     today_str = f"{today.year}-{month}-{day}"
-    return(today_str)
+    return today_str
 
 
-def plus_day(
-        day: str
-        ) -> str:
+def plus_day(day: str) -> str:
     day_time = datetime.datetime.strptime(day, "%Y-%m-%d")
     day_after = str((day_time + datetime.timedelta(days=1)).date())
-    return(day_after)
+    return day_after
 
-def minus_day(
-        day: str
-        ) -> str:
+
+def minus_day(day: str) -> str:
     day_time = datetime.datetime.strptime(day, "%Y-%m-%d")
     day_after = str((day_time - datetime.timedelta(days=1)).date())
-    return(day_after)
-
+    return day_after
 
 
 class testUnit:
     def __init__(self):
         print("utils test unit")
         print(f"to2str('1') == '01': {to2str('1') == '01'}")
-        print(f"plus_day('2020-08-31') == '2020-09-01': {plus_day('2020-08-31') == '2020-09-01'}")
+        print(
+            f"plus_day('2020-08-31') == '2020-09-01': {plus_day('2020-08-31') == '2020-09-01'}"
+        )

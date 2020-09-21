@@ -22,10 +22,8 @@ Return is in log scale so while > 0: the algorithm makes money
 
 The system downloads data from yahoo finance (using yfinance) and computes what portion of the wealth to put on what stock.
 
-Run ```./run.py``` once a day, the multipliers are in ```multipliers.log```.
+Run ```./run.py``` once a day, the wealth multipliers are in ```multipliers.log```.
 
 ## Notebook
-
-The notebook file is just for convenience of the reader.
 
 ```py2ng.py``` converts ```.py``` to ```.ipynb```.
