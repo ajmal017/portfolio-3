@@ -1,6 +1,6 @@
 # Online Portfolio Selection
 
-Implementation of Online Gradient Ascent and Online Newton Step based on [Logarithmic Regret Algorithms for Online Convex Optimization](paper/Logarithmic Regret Algorithms for Online Convex Optimization.pdf).
+Implementation of Online Gradient Ascent and Online Newton Step based on [Logarithmic Regret Algorithms for Online Convex Optimization](paper/log_reg.pdf).
 
 Also implemented a system to automate the process on 'real time' data from Yahoo Finance.
 
@@ -11,7 +11,7 @@ The system downloads data from Yahoo Finance (using yfinance) and computes what 
 
 Define the companies to compute the return on in ```run.py``` and execute the file, the wealth multipliers will be logged to ```multipliers.log```.
 
-The downloaded data and the parameters for the algorithms is saved in ```/data```.
+The downloaded data and the parameters for the algorithms saved in ```/data```.
 
 ### Dependencies
 
