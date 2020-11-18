@@ -7,8 +7,8 @@ import numpy as np
 
 
 def play(
-    comps,  # companies for trade
-    default_start="2010-01-01",  # history for computation
+        comps: str,  # companies for trade
+        default_start: str="2010-01-01",  # history for computation
 ):
 
     try:
